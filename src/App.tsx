@@ -25,9 +25,24 @@ type DreamSong = {
   composer: string;
 };
 
+type ProgressMap = Record<string, boolean>;
+
 type LevelData = {
   practiceItems: PracticeItem[];
   dreamSongs: DreamSong[];
+  progress: ProgressMap;
+};
+
+type StaffNote = {
+  note: string;
+  label: string;
+  staff: "Treble" | "Bass";
+  y: number;
+};
+
+type EarPrompt = {
+  label: string;
+  notes: string[];
 };
 
 const NOTE_NAMES: NoteName[] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -44,6 +59,81 @@ const BLACK_KEYS = [
   { note: "G#4", afterWhiteKey: 11 },
   { note: "A#4", afterWhiteKey: 12 },
 ];
+
+const STAFF_NOTES_BY_STAGE: Record<"early" | "middle" | "late" | "advanced", StaffNote[]> = {
+  early: [
+    { note: "C4", label: "Middle C", staff: "Treble", y: 108 },
+    { note: "D4", label: "D", staff: "Treble", y: 96 },
+    { note: "E4", label: "E", staff: "Treble", y: 84 },
+    { note: "F4", label: "F", staff: "Treble", y: 72 },
+    { note: "G4", label: "G", staff: "Treble", y: 60 },
+  ],
+  middle: [
+    { note: "C4", label: "Middle C", staff: "Treble", y: 108 },
+    { note: "D4", label: "D", staff: "Treble", y: 96 },
+    { note: "E4", label: "E", staff: "Treble", y: 84 },
+    { note: "F4", label: "F", staff: "Treble", y: 72 },
+    { note: "G4", label: "G", staff: "Treble", y: 60 },
+    { note: "A4", label: "A", staff: "Treble", y: 48 },
+    { note: "B4", label: "B", staff: "Treble", y: 36 },
+    { note: "C5", label: "C", staff: "Treble", y: 24 },
+  ],
+  late: [
+    { note: "C3", label: "Bass C", staff: "Bass", y: 84 },
+    { note: "D3", label: "Bass D", staff: "Bass", y: 72 },
+    { note: "E3", label: "Bass E", staff: "Bass", y: 60 },
+    { note: "F3", label: "Bass F", staff: "Bass", y: 48 },
+    { note: "G3", label: "Bass G", staff: "Bass", y: 36 },
+    { note: "A3", label: "Bass A", staff: "Bass", y: 24 },
+    { note: "C4", label: "Middle C", staff: "Treble", y: 108 },
+    { note: "G4", label: "G", staff: "Treble", y: 60 },
+    { note: "C5", label: "C", staff: "Treble", y: 24 },
+  ],
+  advanced: [
+    { note: "C3", label: "Bass C", staff: "Bass", y: 84 },
+    { note: "E3", label: "Bass E", staff: "Bass", y: 60 },
+    { note: "G3", label: "Bass G", staff: "Bass", y: 36 },
+    { note: "B3", label: "Bass B", staff: "Bass", y: 12 },
+    { note: "C4", label: "Middle C", staff: "Treble", y: 108 },
+    { note: "E4", label: "E", staff: "Treble", y: 84 },
+    { note: "G4", label: "G", staff: "Treble", y: 60 },
+    { note: "B4", label: "B", staff: "Treble", y: 36 },
+    { note: "C5", label: "C", staff: "Treble", y: 24 },
+  ],
+};
+
+const EAR_PROMPTS_BY_STAGE: Record<"early" | "middle" | "late" | "advanced", EarPrompt[]> = {
+  early: [
+    { label: "Major 2nd", notes: ["C4", "D4"] },
+    { label: "Major 3rd", notes: ["C4", "E4"] },
+    { label: "Perfect 5th", notes: ["C4", "G4"] },
+  ],
+  middle: [
+    { label: "Minor 3rd", notes: ["C4", "D#4"] },
+    { label: "Perfect 4th", notes: ["C4", "F4"] },
+    { label: "Major 6th", notes: ["C4", "A4"] },
+    { label: "Octave", notes: ["C4", "C5"] },
+  ],
+  late: [
+    { label: "Major triad", notes: ["C4", "E4", "G4"] },
+    { label: "Minor triad", notes: ["C4", "D#4", "G4"] },
+    { label: "Diminished triad", notes: ["C4", "D#4", "F#4"] },
+    { label: "Dominant 7th", notes: ["C4", "E4", "G4", "A#4"] },
+  ],
+  advanced: [
+    { label: "Major 7th", notes: ["C4", "E4", "G4", "B4"] },
+    { label: "Half-diminished 7th", notes: ["C4", "D#4", "F#4", "A#4"] },
+    { label: "Fully diminished 7th", notes: ["C4", "D#4", "F#4", "A4"] },
+    { label: "Augmented triad", notes: ["C4", "E4", "G#4"] },
+  ],
+};
+
+const PROGRESS_BY_STAGE: Record<"early" | "middle" | "late" | "advanced", string[]> = {
+  early: ["Name white keys", "Read C-G on the staff", "Play a five-finger pattern", "Identify steps and skips"],
+  middle: ["Play major scales hands separate", "Build I-IV-V chords", "Recognize simple cadences", "Read treble and bass notes"],
+  late: ["Analyze Roman numerals", "Practice harmonic minor scales", "Identify secondary dominants", "Sight-read two-hand textures"],
+  advanced: ["Analyze chromatic harmony", "Recognize augmented sixth chords", "Plan advanced repertoire", "Prepare performance notes"],
+};
 const SCALE_PATTERNS = {
   major: [2, 2, 1, 2, 2, 2, 1],
   naturalMinor: [2, 1, 2, 2, 1, 2, 2],
@@ -151,6 +241,7 @@ const QUIZ_BY_STAGE: Record<"early" | "middle" | "late" | "advanced", QuizQuesti
 const createBlankLevelData = (): LevelData => ({
   practiceItems: [{ id: 1, goal: "", time: "" }],
   dreamSongs: [{ id: 1, title: "", composer: "" }],
+  progress: {},
 });
 
 const storageKeyForLevel = (level: MeritLevel) => `piano-master:${level}`;
@@ -163,6 +254,7 @@ function loadLevelData(level: MeritLevel): LevelData {
     return {
       practiceItems: parsed.practiceItems?.length ? parsed.practiceItems : createBlankLevelData().practiceItems,
       dreamSongs: parsed.dreamSongs?.length ? parsed.dreamSongs.map(({ id, title, composer }) => ({ id, title, composer })) : createBlankLevelData().dreamSongs,
+      progress: parsed.progress ?? {},
     };
   } catch {
     return createBlankLevelData();
@@ -196,6 +288,12 @@ function getLevelFocus(level: MeritLevel) {
   if (stage === "middle") return "Triads, seventh chords, cadences, minor scales, and Roman numerals.";
   if (stage === "late") return "Secondary dominants, cadential 6/4, modulation, and chromatic color.";
   return "Advanced chromatic harmony, mixture, augmented sixth chords, and analysis.";
+}
+
+function pickNextItem<T>(items: T[], current?: T) {
+  if (items.length <= 1) return items[0];
+  const choices = items.filter((item) => item !== current);
+  return choices[Math.floor(Math.random() * choices.length)];
 }
 
 function buildScale(root: NoteName, pattern: number[]) {
@@ -254,9 +352,19 @@ export function App() {
   const [quizIndex, setQuizIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<MeritLevel>(initialLevel);
-  const [practiceItems, setPracticeItems] = useState<PracticeItem[]>(() => loadLevelData(initialLevel).practiceItems);
-  const [dreamSongs, setDreamSongs] = useState<DreamSong[]>(() => loadLevelData(initialLevel).dreamSongs);
+  const initialLevelData = loadLevelData(initialLevel);
+  const initialStage = getLevelStage(initialLevel);
+  const [practiceItems, setPracticeItems] = useState<PracticeItem[]>(() => initialLevelData.practiceItems);
+  const [dreamSongs, setDreamSongs] = useState<DreamSong[]>(() => initialLevelData.dreamSongs);
+  const [progress, setProgress] = useState<ProgressMap>(() => initialLevelData.progress);
+  const [staffTarget, setStaffTarget] = useState<StaffNote>(() => STAFF_NOTES_BY_STAGE[initialStage][0]);
+  const [staffFeedback, setStaffFeedback] = useState("");
+  const [earPrompt, setEarPrompt] = useState<EarPrompt>(() => EAR_PROMPTS_BY_STAGE[initialStage][0]);
+  const [selectedEarAnswer, setSelectedEarAnswer] = useState("");
 
+  const stage = getLevelStage(selectedLevel);
+  const progressItems = PROGRESS_BY_STAGE[stage];
+  const earOptions = EAR_PROMPTS_BY_STAGE[stage].map((prompt) => prompt.label);
   const quizQuestions = QUIZ_BY_STAGE[getLevelStage(selectedLevel)];
   const scale = useMemo(() => buildScale(root, SCALE_PATTERNS[scaleType]), [root, scaleType]);
   const triad = useMemo(() => buildTriad(root, chordQuality), [root, chordQuality]);
@@ -264,8 +372,8 @@ export function App() {
   const isCorrect = selectedAnswer === question.answer;
 
   useEffect(() => {
-    saveLevelData(selectedLevel, { practiceItems, dreamSongs });
-  }, [dreamSongs, practiceItems, selectedLevel]);
+    saveLevelData(selectedLevel, { practiceItems, dreamSongs, progress });
+  }, [dreamSongs, practiceItems, progress, selectedLevel]);
 
   useEffect(() => {
     const syncPageToHash = () => {
@@ -273,28 +381,56 @@ export function App() {
       const savedLevelData = loadLevelData(level);
       setPracticeItems(savedLevelData.practiceItems);
       setDreamSongs(savedLevelData.dreamSongs);
+      setProgress(savedLevelData.progress);
       setSelectedLevel(level);
       setSelectedAnswer("");
       setQuizIndex(0);
+      setStaffTarget(STAFF_NOTES_BY_STAGE[getLevelStage(level)][0]);
+      setStaffFeedback("");
+      setEarPrompt(EAR_PROMPTS_BY_STAGE[getLevelStage(level)][0]);
+      setSelectedEarAnswer("");
     };
 
     window.addEventListener("hashchange", syncPageToHash);
     return () => window.removeEventListener("hashchange", syncPageToHash);
   }, []);
 
-  const playNote = (note: string) => {
+  const playNote = (note: string, checkStaffAnswer = true) => {
     setActiveNote(note);
     playTone(note);
+    if (checkStaffAnswer) {
+      if (note === staffTarget.note) {
+        setStaffFeedback(`Correct: ${staffTarget.label}`);
+      } else {
+        setStaffFeedback(`Try again. You clicked ${note}.`);
+      }
+    }
+  };
+
+  const nextStaffNote = () => {
+    setStaffTarget((current) => pickNextItem(STAFF_NOTES_BY_STAGE[stage], current));
+    setStaffFeedback("");
   };
 
   const playScale = () => {
     scale.forEach((note, index) => {
-      window.setTimeout(() => playNote(`${note}${note === "C" && index > 0 ? 5 : 4}`), index * 360);
+      window.setTimeout(() => playNote(`${note}${note === "C" && index > 0 ? 5 : 4}`, false), index * 360);
     });
   };
 
   const playChord = () => {
     triad.forEach((note) => playTone(`${note}4`, 0.9));
+  };
+
+  const playEarPrompt = () => {
+    earPrompt.notes.forEach((note, index) => {
+      window.setTimeout(() => playTone(note, 0.7), index * 360);
+    });
+  };
+
+  const nextEarPrompt = () => {
+    setEarPrompt((current) => pickNextItem(EAR_PROMPTS_BY_STAGE[stage], current));
+    setSelectedEarAnswer("");
   };
 
   const nextQuestion = () => {
@@ -326,13 +462,22 @@ export function App() {
     setDreamSongs((songs) => (songs.length === 1 ? [{ id: Date.now(), title: "", composer: "" }] : songs.filter((song) => song.id !== id)));
   };
 
+  const toggleProgress = (item: string) => {
+    setProgress((current) => ({ ...current, [item]: !current[item] }));
+  };
+
   const openLevel = (level: MeritLevel) => {
     const savedLevelData = loadLevelData(level);
     setPracticeItems(savedLevelData.practiceItems);
     setDreamSongs(savedLevelData.dreamSongs);
+    setProgress(savedLevelData.progress);
     setSelectedLevel(level);
     setQuizIndex(0);
     setSelectedAnswer("");
+    setStaffTarget(STAFF_NOTES_BY_STAGE[getLevelStage(level)][0]);
+    setStaffFeedback("");
+    setEarPrompt(EAR_PROMPTS_BY_STAGE[getLevelStage(level)][0]);
+    setSelectedEarAnswer("");
     window.location.hash = `/levels/${levelToSlug(level)}`;
   };
 
@@ -375,7 +520,7 @@ export function App() {
               <Piano size={22} />
               <h2>Keyboard</h2>
             </div>
-            <button className="icon-button" onClick={() => playNote(activeNote)} aria-label="Replay active note">
+            <button className="icon-button" onClick={() => playNote(activeNote, false)} aria-label="Replay active note">
               <Volume2 size={18} />
             </button>
           </div>
@@ -412,6 +557,31 @@ export function App() {
             <span>Last note</span>
             <strong>{activeNote}</strong>
           </div>
+        </div>
+
+        <div className="panel note-reading-panel">
+          <div className="panel-header">
+            <div>
+              <Music2 size={22} />
+              <h2>Note Reading</h2>
+            </div>
+            <button className="icon-button" onClick={nextStaffNote} aria-label="Next note">
+              <RotateCcw size={18} />
+            </button>
+          </div>
+          <div className="staff-card" aria-label={`Read ${staffTarget.staff} staff note`}>
+            <span>{staffTarget.staff}</span>
+            <svg viewBox="0 0 280 132" role="img" aria-label={`Find ${staffTarget.label} on the keyboard`}>
+              {[36, 48, 60, 72, 84].map((lineY) => (
+                <line key={lineY} x1="24" x2="256" y1={lineY} y2={lineY} />
+              ))}
+              {staffTarget.note === "C4" && <line className="ledger" x1="116" x2="164" y1="108" y2="108" />}
+              <ellipse cx="140" cy={staffTarget.y} rx="15" ry="10" transform={`rotate(-18 140 ${staffTarget.y})`} />
+            </svg>
+          </div>
+          <p className={`tool-feedback ${staffFeedback.startsWith("Correct") ? "correct" : ""}`}>
+            {staffFeedback || "Click the matching piano key."}
+          </p>
         </div>
 
         <div className="panel theory-panel">
@@ -500,6 +670,59 @@ export function App() {
             </div>
           )}
           <button className="wide-button" onClick={nextQuestion}>Next question</button>
+        </div>
+
+        <div className="panel ear-panel">
+          <div className="panel-header">
+            <div>
+              <Volume2 size={22} />
+              <h2>Ear Training</h2>
+            </div>
+            <button className="icon-button" onClick={nextEarPrompt} aria-label="Next ear training prompt">
+              <RotateCcw size={18} />
+            </button>
+          </div>
+          <button className="wide-button" onClick={playEarPrompt}>
+            <Play size={17} /> Play sound
+          </button>
+          <div className="answer-list compact">
+            {earOptions.map((option) => (
+              <button
+                key={option}
+                className={selectedEarAnswer === option ? "selected" : ""}
+                onClick={() => setSelectedEarAnswer(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          {selectedEarAnswer && (
+            <div className={`feedback ${selectedEarAnswer === earPrompt.label ? "correct" : "incorrect"}`}>
+              <Check size={18} />
+              <span>{selectedEarAnswer === earPrompt.label ? "Correct." : `Answer: ${earPrompt.label}.`}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="panel progress-panel">
+          <div className="panel-header">
+            <div>
+              <Check size={22} />
+              <h2>{selectedLevel} Progress</h2>
+            </div>
+          </div>
+          <div className="progress-list">
+            {progressItems.map((item) => (
+              <label className="progress-item" key={item}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(progress[item])}
+                  onChange={() => toggleProgress(item)}
+                />
+                <span>{item}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         <div className="panel plan-panel">

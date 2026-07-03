@@ -392,6 +392,10 @@ textarea:focus {
   margin: 18px 0;
 }
 
+.answer-list.compact {
+  margin-bottom: 12px;
+}
+
 .answer-list button {
   min-height: 46px;
   padding: 10px 12px;
@@ -431,6 +435,76 @@ textarea:focus {
 
 .wide-button {
   width: 100%;
+}
+
+.staff-card {
+  display: grid;
+  gap: 8px;
+  padding: 15px;
+  background: #f8f5ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.staff-card span {
+  color: var(--rose);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.staff-card svg {
+  width: 100%;
+  min-height: 132px;
+}
+
+.staff-card line {
+  stroke: #2f3439;
+  stroke-width: 2;
+}
+
+.staff-card .ledger {
+  stroke-width: 2.5;
+}
+
+.staff-card ellipse {
+  fill: var(--ink);
+}
+
+.tool-feedback {
+  margin-top: 12px;
+  padding: 12px;
+  color: #84303d;
+  background: #f8e7ea;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.tool-feedback.correct {
+  color: #0a5b47;
+  background: #e5f3ec;
+}
+
+.progress-list {
+  display: grid;
+  gap: 10px;
+}
+
+.progress-item {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  min-height: 46px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #f8f5ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.progress-item input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--accent);
 }
 
 .plan-list,
