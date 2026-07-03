@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, Check, CircleHelp, Music2, Piano, Play, Plus, RotateCcw, Trash2, Volume2 } from "lucide-react";
+import { BookOpen, Check, CircleHelp, Music2, Piano, Play, Plus, RotateCcw, Trash2, Volume2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -179,7 +179,7 @@ function levelToSlug(level: MeritLevel) {
 
 function getLevelFromHash() {
   const slug = window.location.hash.replace("#/levels/", "");
-  return MERIT_LEVELS.find((level) => levelToSlug(level) === slug) ?? null;
+  return MERIT_LEVELS.find((level) => levelToSlug(level) === slug) ?? "Preparatory";
 }
 
 function getLevelStage(level: MeritLevel): keyof typeof QUIZ_BY_STAGE {
@@ -253,32 +253,23 @@ export function App() {
   const [activeNote, setActiveNote] = useState("C4");
   const [quizIndex, setQuizIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState<MeritLevel | null>(initialLevel);
-  const [practiceItems, setPracticeItems] = useState<PracticeItem[]>(() => (initialLevel ? loadLevelData(initialLevel).practiceItems : createBlankLevelData().practiceItems));
-  const [dreamSongs, setDreamSongs] = useState<DreamSong[]>(() => (initialLevel ? loadLevelData(initialLevel).dreamSongs : createBlankLevelData().dreamSongs));
+  const [selectedLevel, setSelectedLevel] = useState<MeritLevel>(initialLevel);
+  const [practiceItems, setPracticeItems] = useState<PracticeItem[]>(() => loadLevelData(initialLevel).practiceItems);
+  const [dreamSongs, setDreamSongs] = useState<DreamSong[]>(() => loadLevelData(initialLevel).dreamSongs);
 
-  const activeLevel = selectedLevel ?? "Preparatory";
-  const quizQuestions = QUIZ_BY_STAGE[getLevelStage(activeLevel)];
+  const quizQuestions = QUIZ_BY_STAGE[getLevelStage(selectedLevel)];
   const scale = useMemo(() => buildScale(root, SCALE_PATTERNS[scaleType]), [root, scaleType]);
   const triad = useMemo(() => buildTriad(root, chordQuality), [root, chordQuality]);
   const question = quizQuestions[quizIndex % quizQuestions.length];
   const isCorrect = selectedAnswer === question.answer;
 
   useEffect(() => {
-    if (!selectedLevel) return;
     saveLevelData(selectedLevel, { practiceItems, dreamSongs });
   }, [dreamSongs, practiceItems, selectedLevel]);
 
   useEffect(() => {
     const syncPageToHash = () => {
       const level = getLevelFromHash();
-      if (!level) {
-        setSelectedLevel(null);
-        setSelectedAnswer("");
-        setQuizIndex(0);
-        return;
-      }
-
       const savedLevelData = loadLevelData(level);
       setPracticeItems(savedLevelData.practiceItems);
       setDreamSongs(savedLevelData.dreamSongs);
@@ -345,11 +336,6 @@ export function App() {
     window.location.hash = `/levels/${levelToSlug(level)}`;
   };
 
-  const returnToLevels = () => {
-    setSelectedLevel(null);
-    window.location.hash = "";
-  };
-
   return (
     <main className="app">
       <section className="hero">
@@ -364,49 +350,24 @@ export function App() {
         </div>
       </section>
 
-      {!selectedLevel && (
-        <section className="panel level-hub">
-          <div className="panel-header">
-            <div>
-              <BookOpen size={22} />
-              <h2>Choose Your Level</h2>
-            </div>
+      <section className="panel level-selector-panel">
+        <div className="level-selector-copy">
+          <div>
+            <BookOpen size={22} />
+            <h2>{selectedLevel}</h2>
           </div>
-          <div className="level-grid">
+          <p>{getLevelFocus(selectedLevel)}</p>
+        </div>
+        <label>
+          Level
+          <select value={selectedLevel} onChange={(event) => openLevel(event.target.value as MeritLevel)}>
             {MERIT_LEVELS.map((level) => (
-              <button key={level} onClick={() => openLevel(level)}>
-                <strong>{level}</strong>
-                <span>{getLevelFocus(level)}</span>
-              </button>
+              <option key={level}>{level}</option>
             ))}
-          </div>
-        </section>
-      )}
+          </select>
+        </label>
+      </section>
 
-      {selectedLevel && (
-        <section className="panel level-selector-panel">
-          <button className="back-button" onClick={returnToLevels}>
-            <ArrowLeft size={18} /> Levels
-          </button>
-          <div className="level-selector-copy">
-            <div>
-              <BookOpen size={22} />
-              <h2>{selectedLevel}</h2>
-            </div>
-            <p>{getLevelFocus(selectedLevel)}</p>
-          </div>
-          <label>
-            Change level
-            <select value={selectedLevel} onChange={(event) => openLevel(event.target.value as MeritLevel)}>
-              {MERIT_LEVELS.map((level) => (
-                <option key={level}>{level}</option>
-              ))}
-            </select>
-          </label>
-        </section>
-      )}
-
-      {selectedLevel && (
       <section className="studio-grid">
         <div className="panel keyboard-panel">
           <div className="panel-header">
@@ -621,7 +582,6 @@ export function App() {
           </div>
         </div>
       </section>
-      )}
     </main>
   );
 }

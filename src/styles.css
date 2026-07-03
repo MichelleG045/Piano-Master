@@ -115,67 +115,11 @@ h1 {
 
 .level-selector-panel {
   display: grid;
-  grid-template-columns: auto 1fr minmax(220px, 320px);
+  grid-template-columns: 1fr minmax(220px, 320px);
   gap: 18px;
   align-items: end;
   max-width: 1220px;
   margin: 0 auto 18px;
-}
-
-.level-hub {
-  max-width: 1220px;
-  margin: 0 auto;
-}
-
-.level-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.level-grid button {
-  display: grid;
-  gap: 8px;
-  min-height: 118px;
-  padding: 16px;
-  color: var(--ink);
-  text-align: left;
-  background: #f8f5ef;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.level-grid button:hover {
-  color: white;
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.level-grid strong {
-  font-size: 1.05rem;
-}
-
-.level-grid span {
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-.level-grid button:hover span {
-  color: rgba(255, 255, 255, 0.84);
-}
-
-.back-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 0 14px;
-  color: var(--ink);
-  background: #f2eee6;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  font-weight: 900;
 }
 
 .level-selector-copy {
@@ -587,10 +531,6 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
-  .level-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .keyboard-panel,
   .plan-panel,
   .repertoire-panel {
@@ -623,8 +563,7 @@ textarea:focus {
   }
 
   .controls,
-  .action-row,
-  .level-grid {
+  .action-row {
     grid-template-columns: 1fr;
   }
 
