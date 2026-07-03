@@ -368,6 +368,43 @@ input[type="range"] {
   font-size: 1.15rem;
 }
 
+.fingering-guide {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 15px;
+  background: #f8f5ef;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.fingering-guide > span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.finger-row {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.finger-row strong {
+  color: var(--rose);
+}
+
+.finger-row p {
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.fingering-guide small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .action-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

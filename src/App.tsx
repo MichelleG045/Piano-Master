@@ -49,6 +49,12 @@ type EarPrompt = {
   notes: string[];
 };
 
+type FingeringPattern = {
+  right: string;
+  left: string;
+  note: string;
+};
+
 const NOTE_NAMES: NoteName[] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const WHITE_KEYS = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
 const DREAM_SONG_STATUSES: DreamSongStatus[] = ["Want to learn", "Learning", "Memorized", "Performance ready"];
@@ -138,6 +144,50 @@ const PROGRESS_BY_STAGE: Record<"early" | "middle" | "late" | "advanced", string
   middle: ["Play major scales hands separate", "Build I-IV-V chords", "Recognize simple cadences", "Read treble and bass notes"],
   late: ["Analyze Roman numerals", "Practice harmonic minor scales", "Identify secondary dominants", "Sight-read two-hand textures"],
   advanced: ["Analyze chromatic harmony", "Recognize augmented sixth chords", "Plan advanced repertoire", "Prepare performance notes"],
+};
+
+const FINGERING_BY_ROOT: Partial<Record<NoteName, FingeringPattern>> = {
+  C: {
+    right: "1-2-3-1-2-3-4-5",
+    left: "5-4-3-2-1-3-2-1",
+    note: "Classic beginner fingering for C major.",
+  },
+  G: {
+    right: "1-2-3-1-2-3-4-5",
+    left: "5-4-3-2-1-3-2-1",
+    note: "Same fingering shape as C major, with F sharp.",
+  },
+  D: {
+    right: "1-2-3-1-2-3-4-5",
+    left: "5-4-3-2-1-3-2-1",
+    note: "Use the standard major-scale crossing pattern.",
+  },
+  A: {
+    right: "1-2-3-1-2-3-4-5",
+    left: "5-4-3-2-1-3-2-1",
+    note: "Keep thumb crossings smooth and close to the keys.",
+  },
+  E: {
+    right: "1-2-3-1-2-3-4-5",
+    left: "5-4-3-2-1-3-2-1",
+    note: "A common pattern for sharp major keys.",
+  },
+  F: {
+    right: "1-2-3-4-1-2-3-4",
+    left: "5-4-3-2-1-3-2-1",
+    note: "Right hand usually places finger 4 on B flat.",
+  },
+  B: {
+    right: "1-2-3-1-2-3-4-5",
+    left: "4-3-2-1-4-3-2-1",
+    note: "Left hand often starts on finger 4 for B major.",
+  },
+};
+
+const DEFAULT_FINGERING: FingeringPattern = {
+  right: "1-2-3-1-2-3-4-5",
+  left: "5-4-3-2-1-3-2-1",
+  note: "Use this as a starting guide; confirm special keys with your teacher.",
 };
 const SCALE_PATTERNS = {
   major: [2, 2, 1, 2, 2, 2, 1],
@@ -392,6 +442,7 @@ export function App() {
   const quizQuestions = QUIZ_BY_STAGE[getLevelStage(selectedLevel)];
   const scale = useMemo(() => buildScale(root, SCALE_PATTERNS[scaleType]), [root, scaleType]);
   const triad = useMemo(() => buildTriad(root, chordQuality), [root, chordQuality]);
+  const fingering = FINGERING_BY_ROOT[root] ?? DEFAULT_FINGERING;
   const question = quizQuestions[quizIndex % quizQuestions.length];
   const isCorrect = selectedAnswer === question.answer;
 
@@ -725,6 +776,19 @@ export function App() {
               <span>Triad tones</span>
               <strong>{triad.join(" - ")}</strong>
             </div>
+          </div>
+
+          <div className="fingering-guide">
+            <span>Scale fingering guide</span>
+            <div className="finger-row">
+              <strong>RH</strong>
+              <p>{fingering.right}</p>
+            </div>
+            <div className="finger-row">
+              <strong>LH</strong>
+              <p>{fingering.left}</p>
+            </div>
+            <small>{fingering.note}</small>
           </div>
 
           <div className="action-row">
