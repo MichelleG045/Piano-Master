@@ -335,6 +335,20 @@ textarea:focus {
   outline: 3px solid rgba(14, 124, 123, 0.14);
 }
 
+input[type="range"] {
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.timer-readout {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3.25rem;
+  line-height: 1;
+}
+
 .theory-output {
   display: grid;
   gap: 10px;

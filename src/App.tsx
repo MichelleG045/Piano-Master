@@ -1,4 +1,4 @@
-import { BookOpen, Check, CircleHelp, Music2, Piano, Play, Plus, RotateCcw, Trash2, Volume2 } from "lucide-react";
+import { BookOpen, Check, CircleHelp, Music2, Pause, Piano, Play, Plus, RotateCcw, Trash2, Volume2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -19,10 +19,13 @@ type PracticeItem = {
 
 type MeritLevel = "Preparatory" | "Level 1" | "Level 2" | "Level 3" | "Level 4" | "Level 5" | "Level 6" | "Level 7" | "Level 8" | "Level 9" | "Level 10" | "Advanced";
 
+type DreamSongStatus = "Want to learn" | "Learning" | "Memorized" | "Performance ready";
+
 type DreamSong = {
   id: number;
   title: string;
   composer: string;
+  status: DreamSongStatus;
 };
 
 type ProgressMap = Record<string, boolean>;
@@ -31,6 +34,7 @@ type LevelData = {
   practiceItems: PracticeItem[];
   dreamSongs: DreamSong[];
   progress: ProgressMap;
+  practiceSeconds: number;
 };
 
 type StaffNote = {
@@ -47,6 +51,7 @@ type EarPrompt = {
 
 const NOTE_NAMES: NoteName[] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const WHITE_KEYS = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+const DREAM_SONG_STATUSES: DreamSongStatus[] = ["Want to learn", "Learning", "Memorized", "Performance ready"];
 const BLACK_KEYS = [
   { note: "C#3", afterWhiteKey: 0 },
   { note: "D#3", afterWhiteKey: 1 },
@@ -240,8 +245,9 @@ const QUIZ_BY_STAGE: Record<"early" | "middle" | "late" | "advanced", QuizQuesti
 
 const createBlankLevelData = (): LevelData => ({
   practiceItems: [{ id: 1, goal: "", time: "" }],
-  dreamSongs: [{ id: 1, title: "", composer: "" }],
+  dreamSongs: [{ id: 1, title: "", composer: "", status: "Want to learn" }],
   progress: {},
+  practiceSeconds: 0,
 });
 
 const storageKeyForLevel = (level: MeritLevel) => `piano-master:${level}`;
@@ -253,8 +259,16 @@ function loadLevelData(level: MeritLevel): LevelData {
     const parsed = JSON.parse(saved) as Partial<LevelData>;
     return {
       practiceItems: parsed.practiceItems?.length ? parsed.practiceItems : createBlankLevelData().practiceItems,
-      dreamSongs: parsed.dreamSongs?.length ? parsed.dreamSongs.map(({ id, title, composer }) => ({ id, title, composer })) : createBlankLevelData().dreamSongs,
+      dreamSongs: parsed.dreamSongs?.length
+        ? parsed.dreamSongs.map(({ id, title, composer, status }) => ({
+            id,
+            title,
+            composer,
+            status: status ?? "Want to learn",
+          }))
+        : createBlankLevelData().dreamSongs,
       progress: parsed.progress ?? {},
+      practiceSeconds: parsed.practiceSeconds ?? 0,
     };
   } catch {
     return createBlankLevelData();
@@ -294,6 +308,12 @@ function pickNextItem<T>(items: T[], current?: T) {
   if (items.length <= 1) return items[0];
   const choices = items.filter((item) => item !== current);
   return choices[Math.floor(Math.random() * choices.length)];
+}
+
+function formatTimer(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
 function buildScale(root: NoteName, pattern: number[]) {
@@ -357,6 +377,10 @@ export function App() {
   const [practiceItems, setPracticeItems] = useState<PracticeItem[]>(() => initialLevelData.practiceItems);
   const [dreamSongs, setDreamSongs] = useState<DreamSong[]>(() => initialLevelData.dreamSongs);
   const [progress, setProgress] = useState<ProgressMap>(() => initialLevelData.progress);
+  const [practiceSeconds, setPracticeSeconds] = useState(() => initialLevelData.practiceSeconds);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [bpm, setBpm] = useState(80);
+  const [metronomeRunning, setMetronomeRunning] = useState(false);
   const [staffTarget, setStaffTarget] = useState<StaffNote>(() => STAFF_NOTES_BY_STAGE[initialStage][0]);
   const [staffFeedback, setStaffFeedback] = useState("");
   const [earPrompt, setEarPrompt] = useState<EarPrompt>(() => EAR_PROMPTS_BY_STAGE[initialStage][0]);
@@ -372,8 +396,26 @@ export function App() {
   const isCorrect = selectedAnswer === question.answer;
 
   useEffect(() => {
-    saveLevelData(selectedLevel, { practiceItems, dreamSongs, progress });
-  }, [dreamSongs, practiceItems, progress, selectedLevel]);
+    saveLevelData(selectedLevel, { practiceItems, dreamSongs, progress, practiceSeconds });
+  }, [dreamSongs, practiceItems, practiceSeconds, progress, selectedLevel]);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const timerId = window.setInterval(() => {
+      setPracticeSeconds((seconds) => seconds + 1);
+    }, 1000);
+    return () => window.clearInterval(timerId);
+  }, [timerRunning]);
+
+  useEffect(() => {
+    if (!metronomeRunning) return;
+    playTone("C5", 0.08);
+    const intervalMs = Math.round(60000 / bpm);
+    const timerId = window.setInterval(() => {
+      playTone("C5", 0.08);
+    }, intervalMs);
+    return () => window.clearInterval(timerId);
+  }, [bpm, metronomeRunning]);
 
   useEffect(() => {
     const syncPageToHash = () => {
@@ -382,6 +424,9 @@ export function App() {
       setPracticeItems(savedLevelData.practiceItems);
       setDreamSongs(savedLevelData.dreamSongs);
       setProgress(savedLevelData.progress);
+      setPracticeSeconds(savedLevelData.practiceSeconds);
+      setTimerRunning(false);
+      setMetronomeRunning(false);
       setSelectedLevel(level);
       setSelectedAnswer("");
       setQuizIndex(0);
@@ -455,11 +500,11 @@ export function App() {
   };
 
   const addDreamSong = () => {
-    setDreamSongs((songs) => [...songs, { id: Date.now(), title: "", composer: "" }]);
+    setDreamSongs((songs) => [...songs, { id: Date.now(), title: "", composer: "", status: "Want to learn" }]);
   };
 
   const removeDreamSong = (id: number) => {
-    setDreamSongs((songs) => (songs.length === 1 ? [{ id: Date.now(), title: "", composer: "" }] : songs.filter((song) => song.id !== id)));
+    setDreamSongs((songs) => (songs.length === 1 ? [{ id: Date.now(), title: "", composer: "", status: "Want to learn" }] : songs.filter((song) => song.id !== id)));
   };
 
   const toggleProgress = (item: string) => {
@@ -471,6 +516,9 @@ export function App() {
     setPracticeItems(savedLevelData.practiceItems);
     setDreamSongs(savedLevelData.dreamSongs);
     setProgress(savedLevelData.progress);
+    setPracticeSeconds(savedLevelData.practiceSeconds);
+    setTimerRunning(false);
+    setMetronomeRunning(false);
     setSelectedLevel(level);
     setQuizIndex(0);
     setSelectedAnswer("");
@@ -514,6 +562,55 @@ export function App() {
       </section>
 
       <section className="studio-grid">
+        <div className="panel timer-panel">
+          <div className="panel-header">
+            <div>
+              <Play size={22} />
+              <h2>Practice Timer</h2>
+            </div>
+            <span className="level-pill">{selectedLevel}</span>
+          </div>
+          <strong className="timer-readout">{formatTimer(practiceSeconds)}</strong>
+          <div className="action-row">
+            <button onClick={() => setTimerRunning((running) => !running)}>
+              {timerRunning ? <Pause size={17} /> : <Play size={17} />}
+              {timerRunning ? "Pause" : "Start"}
+            </button>
+            <button onClick={() => {
+              setTimerRunning(false);
+              setPracticeSeconds(0);
+            }}>
+              <RotateCcw size={17} /> Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="panel metronome-panel">
+          <div className="panel-header">
+            <div>
+              <Music2 size={22} />
+              <h2>Metronome</h2>
+            </div>
+            <button className="icon-button" onClick={() => playTone("C5", 0.08)} aria-label="Preview metronome click">
+              <Volume2 size={18} />
+            </button>
+          </div>
+          <label>
+            Tempo: {bpm} BPM
+            <input
+              type="range"
+              min="40"
+              max="180"
+              value={bpm}
+              onChange={(event) => setBpm(Number(event.target.value))}
+            />
+          </label>
+          <button className="wide-button" onClick={() => setMetronomeRunning((running) => !running)}>
+            {metronomeRunning ? <Pause size={17} /> : <Play size={17} />}
+            {metronomeRunning ? "Stop" : "Start"}
+          </button>
+        </div>
+
         <div className="panel keyboard-panel">
           <div className="panel-header">
             <div>
@@ -795,7 +892,17 @@ export function App() {
                   />
                 </label>
                 <div className="practice-row">
-                  <span className="level-pill">{selectedLevel}</span>
+                  <label>
+                    Milestone
+                    <select
+                      value={song.status}
+                      onChange={(event) => updateDreamSong(song.id, "status", event.target.value)}
+                    >
+                      {DREAM_SONG_STATUSES.map((status) => (
+                        <option key={status}>{status}</option>
+                      ))}
+                    </select>
+                  </label>
                   <button className="icon-button" onClick={() => removeDreamSong(song.id)} aria-label="Remove dream song">
                     <Trash2 size={18} />
                   </button>
